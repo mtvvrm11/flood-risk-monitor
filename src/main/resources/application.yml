@@ -1,0 +1,78 @@
+  package org.example;
+    
+    import org.example.notification.EmailNotifier;
+    import org.example.scheduler.FloodRiskScheduler;
+    import org.springframework.mail.javamail.JavaMailSenderImpl;
+    
+    import java.util.Properties;
+    
+    public class Main {
+
+    private static final String OPENWEATHER_API_KEY =
+    "ed3af1fdef033267c68b17a53c30cc6c";
+
+    private static final String TELEGRAM_BOT_TOKEN =
+    "8663262102:AAHXpbGgDMZF_DLLH9HLOUheWzEuzkSLPIA";
+
+    private static final String TELEGRAM_CHAT_ID =
+    "512517261";
+
+    // Gmail Email — ваши данные
+    private static final String GMAIL_USERNAME = "ouaaey@gmail.com";
+    private static final String GMAIL_APP_PASSWORD = "ваш-16-значный-пароль";
+    private static final String EMAIL_TO = "mtvvrm7@gmail.com";
+
+    public static void main(String[] args) throws Exception {
+    
+    System.out.println("🌊 Flood Risk Monitor — Starting Scheduler...\n");
+    
+    // 1. Настраиваем монитор
+    FloodRiskMonitor monitor = FloodRiskMonitor.builder()
+    .withApiKey(OPENWEATHER_API_KEY)
+    .withTelegram(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID)
+    .build();
+    
+    // 2. Настраиваем Email
+    EmailNotifier emailNotifier = createEmailNotifier();
+    
+    // 3. Запускаем планировщик
+    FloodRiskScheduler scheduler = new FloodRiskScheduler(
+    monitor,
+    TELEGRAM_BOT_TOKEN,
+    TELEGRAM_CHAT_ID,
+    emailNotifier
+    );
+    
+    scheduler.start();
+    
+    System.out.println("✅ Scheduler started. Checking 3 cities every 2 hours.");
+  System.out.println("📱 Telegram: enabled");
+  System.out.println("📧 Email: " + GMAIL_USERNAME + " → " + EMAIL_TO);
+    System.out.println("⏹  Press Ctrl+C to stop.\n");
+    
+    Thread.currentThread().join();
+  }
+
+    private static EmailNotifier createEmailNotifier() {
+    try {
+    JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+    mailSender.setHost("smtp.gmail.com");
+    mailSender.setPort(587);
+    mailSender.setUsername(GMAIL_USERNAME);
+    mailSender.setPassword(GMAIL_APP_PASSWORD);
+    
+    Properties props = mailSender.getJavaMailProperties();
+    props.put("mail.transport.protocol", "smtp");
+    props.put("mail.smtp.auth", "true");
+    props.put("mail.smtp.starttls.enable", "true");
+    props.put("mail.debug", "false");
+
+  System.out.println("✅ Email configured: " + GMAIL_USERNAME + " → " + EMAIL_TO);
+    
+    return new EmailNotifier(mailSender, GMAIL_USERNAME, EMAIL_TO, true);
+  } catch (Exception e) {
+  System.err.println("⚠️ Email not configured: " + e.getMessage());
+    return null;
+  }
+  }
+  }

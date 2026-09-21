@@ -1,0 +1,36 @@
+stages:
+  - build
+  - test
+  - package
+
+variables:
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+
+build:
+  stage: build
+  image: maven:3.9-openjdk-17
+  script:
+    - mvn compile
+  artifacts:
+    paths:
+      - target/
+
+test:
+  stage: test
+  image: maven:3.9-openjdk-17
+  script:
+    - mvn test
+  artifacts:
+    reports:
+      junit: target/surefire-reports/TEST-*.xml
+
+package:
+  stage: package
+  image: maven:3.9-openjdk-17
+  script:
+    - mvn package -DskipTests
+  artifacts:
+    paths:
+      - target/*.jar
+  only:
+    - main
